@@ -31,11 +31,29 @@ float causticPattern(vec2 uv, float t) {
   return c;
 }
 
+float hash(vec2 p) {
+  return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+}
+
+float noise(vec2 p) {
+  vec2 i = floor(p);
+  vec2 f = fract(p);
+  vec2 u = f * f * (3.0 - 2.0 * f);
+  return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), u.x),
+             mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x), u.y);
+}
+
 void main() {
   float c = causticPattern(vUv * 3.2, uTime);
   c = c * 0.5 + 0.5;
   c = smoothstep(0.4, 0.9, c);
-  vec3 col = mix(uSand, uLight, c);
+
+  // Зернистість і плямистість піску
+  float g = noise(vUv * 260.0);
+  float patches = noise(vUv * 7.0) * 0.5 + noise(vUv * 20.0) * 0.3;
+  vec3 sand = uSand + (g - 0.5) * 0.14 + (patches - 0.35) * 0.12;
+
+  vec3 col = mix(sand, uLight, c);
   gl_FragColor = vec4(col, 1.0);
 }
 `

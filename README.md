@@ -16,15 +16,15 @@
 
 | Вимога | Реалізація |
 | --- | --- |
-| **Примітиви** | `box`, `cylinder`, `sphere`, `plane`, `icosahedron`, `torus`, `cone` (колони, скелі, корали, амфори, вівтар, скриня, монети) |
-| **Складні моделі** | GLTF-модель «кам'яна брама + вівтар» (`public/models/sunken-temple.gltf`) + процедурні корали/рифи |
-| **Матеріали** | камінь, теракота, дерево, золото (metalness/emissive), `shadowMaterial`, кастомні `shaderMaterial` |
+| **Примітиви** | `box`, `cylinder`, `sphere`, `plane`, `icosahedron`, `torus` (колони, вівтар, уламки, енергетичні елементи) |
+| **Складні моделі** | GLTF-модель «кам'яна брама + вівтар» + ~20 готових CC0-моделей (корали, риби, скелі, скрині, статуя, колони) |
+| **Матеріали** | камінь, золото (metalness/emissive), `shadowMaterial`, кастомні `shaderMaterial` |
 | **Освітлення** | ambient + hemisphere + directional (god ray + тіні) + point-світло артефакту (пульсує) |
 | **Тіні** | `PCFSoftShadowMap`, shadow map 2048×2048, `castShadow`/`receiveShadow`, `ShadowMaterial`-приймач |
 | **Анімація** | каустика, хвилі води, пульс артефакту, коливання флори, зграя риб, бульбашки, god rays, морський сніг |
 | **Фізика** | Rapier: знижена гравітація (вода), динамічні валуни, впала колона, плавучі ящики (нейтральна плавучість), ударні хвилі |
 | **Якісний рендер** | ACES Filmic, antialias, dpr [1,2], Bloom + Vignette + ChromaticAberration |
-| **Шейдер** | 3 кастомні GLSL: `caustics` (каустика), `water` (поверхня води), `glow` (френель артефакту) |
+| **Шейдер** | 3 кастомні GLSL: `caustics` (каустика + пісок), `water` (поверхня води), `glow` (френель артефакту) |
 
 ## 🕹️ Керування
 
@@ -40,6 +40,7 @@
 src/
   App.tsx             # Canvas + налаштування рендера
   Scene.tsx           # композиція сцени
+  AutoModel.tsx       # завантаження GLB + авто-нормалізація розміру
   shaders.ts          # кастомні GLSL-шейдери (caustics / water / glow)
   CausticsFloor.tsx   # дно з каустикою + приймач тіней
   WaterSurface.tsx    # поверхня води (хвилі + френель)
@@ -51,21 +52,27 @@ src/
   Effects.tsx         # постобробка
   Overlay.tsx         # HTML-оверлей
   environment/
-    rng.ts            # детермінований PRNG
-    Rocks.tsx         # скелі та піщані пагорби
-    Flora.tsx         # корали, анемони, трава, ламінарія
+    rng.ts            # детермінований PRNG (бульбашки)
+    Rocks.tsx         # скелі (готові GLB)
+    Flora.tsx         # корали, анемони, ламінарія (готові GLB)
     Fauna.tsx         # зграя риб + бульбашки
-    Props.tsx         # скриня, амфори, монети, статуя, колони
+    Props.tsx         # скрині, статуя, колони, черепашки (готові GLB)
 scripts/
   generate-model.mjs  # генерація GLTF-моделі храму
-public/models/        # згенерована модель
+  download-models.mjs # завантаження CC0-моделей з Poly Pizza
+  search-models.mjs   # пошук моделей на Poly Pizza
+public/models/
+  imported/           # готові GLB-моделі (Poly Pizza)
 ```
+
+## 📦 Моделі
+
+Готові 3D-моделі завантажені з [Poly Pizza](https://poly.pizza) (CC0/CC-BY, безкоштовні для використання). Скрипт `scripts/download-models.mjs` качає їх у `public/models/imported/`.
 
 ## 🛠️ Запуск локально
 
 ```bash
 npm install
-npm run generate:model   # модель уже в репозиторії; потрібно лише для регенерації
 npm run dev              # http://localhost:5173
 ```
 

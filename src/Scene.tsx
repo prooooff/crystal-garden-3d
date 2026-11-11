@@ -47,17 +47,19 @@ export function Scene() {
       <CausticsFloor />
       <WaterSurface />
 
-      {/* Наповнення локації */}
-      <Rocks />
-      <Flora />
-      <Fauna />
+      {/* Наповнення локації (готові GLB-моделі) */}
+      <Suspense fallback={null}>
+        <Rocks />
+        <Flora />
+        <Fauna />
+        <Props />
+      </Suspense>
 
-      {/* Центральна композиція: храм + артефакт + реквізит */}
+      {/* Центральна композиція: храм + артефакт */}
       <Suspense fallback={null}>
         <ComplexModel position={[0, 0, 0]} />
       </Suspense>
       <GlowArtifact position={[0, 1.7, 0]} />
-      <Props />
 
       <PhysicsWorld />
 

@@ -14,8 +14,8 @@ export function CausticsFloor() {
   const uniforms = useMemo(
     () => ({
       uTime: { value: 0 },
-      uSand: { value: new THREE.Color('#33424e') },
-      uLight: { value: new THREE.Color('#7fe3e8') },
+      uSand: { value: new THREE.Color('#55666f') },
+      uLight: { value: new THREE.Color('#8fe8ec') },
     }),
     [],
   )

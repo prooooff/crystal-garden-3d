@@ -1,11 +1,12 @@
 import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
+import { AutoModel } from '../AutoModel'
 import { mulberry32 } from './rng'
 
 interface FishDef {
-  color: string
-  scale: number
+  url: string
+  targetSize: number
   speed: number
   phase: number
   radius: number
@@ -13,18 +14,17 @@ interface FishDef {
 }
 
 const FISH: FishDef[] = [
-  { color: '#7fe3e8', scale: 0.5, speed: 0.5, phase: 0, radius: 6, height: 3.5 },
-  { color: '#f5d97a', scale: 0.42, speed: 0.45, phase: 2, radius: 5.5, height: 4 },
-  { color: '#9fb8ff', scale: 0.46, speed: 0.55, phase: 4, radius: 6.5, height: 3 },
-  { color: '#a8e6cf', scale: 0.4, speed: 0.5, phase: 1.3, radius: 6, height: 4.5 },
-  { color: '#7fe3e8', scale: 0.38, speed: 0.6, phase: 3.1, radius: 5, height: 2.8 },
-  { color: '#f5d97a', scale: 0.44, speed: 0.4, phase: 5, radius: 7, height: 3.8 },
-  { color: '#9fb8ff', scale: 0.5, speed: 0.5, phase: 2.6, radius: 5.8, height: 4.2 },
-  { color: '#a8e6cf', scale: 0.36, speed: 0.52, phase: 0.8, radius: 6.2, height: 3.2 },
+  { url: '/models/imported/goldfish.glb', targetSize: 0.7, speed: 0.5, phase: 0, radius: 6, height: 3.5 },
+  { url: '/models/imported/clownfish.glb', targetSize: 0.6, speed: 0.45, phase: 2, radius: 5.5, height: 4 },
+  { url: '/models/imported/blowfish.glb', targetSize: 0.55, speed: 0.5, phase: 4, radius: 6.5, height: 3 },
+  { url: '/models/imported/goldfish.glb', targetSize: 0.6, speed: 0.55, phase: 1.3, radius: 6, height: 4.5 },
+  { url: '/models/imported/clownfish.glb', targetSize: 0.5, speed: 0.5, phase: 3.1, radius: 5, height: 2.8 },
+  { url: '/models/imported/blowfish.glb', targetSize: 0.5, speed: 0.6, phase: 5, radius: 7, height: 3.8 },
+  { url: '/models/imported/shark.glb', targetSize: 2.4, speed: 0.25, phase: 0.8, radius: 9, height: 4.5 },
 ]
 
-/** Рибка, що пливе по еліптичній траєкторії та орієнтується за напрямком руху. */
-function Fish({ color, scale, speed, phase, radius, height }: FishDef) {
+/** Риба (готовий GLB), що пливе по еліптичній траєкторії. */
+function Fish({ url, targetSize, speed, phase, radius, height }: FishDef) {
   const ref = useRef<THREE.Group>(null)
 
   useFrame((state) => {
@@ -32,7 +32,6 @@ function Fish({ color, scale, speed, phase, radius, height }: FishDef) {
     const x = Math.cos(t) * radius
     const z = Math.sin(t * 0.9) * radius
     const y = height + Math.sin(t * 1.4) * 0.7
-    // точка попереду за напрямком руху
     const tx = x - Math.sin(t) * radius
     const tz = z + Math.cos(t * 0.9) * radius * 0.9
     const ty = y + Math.cos(t * 1.4) * 0.5
@@ -44,31 +43,13 @@ function Fish({ color, scale, speed, phase, radius, height }: FishDef) {
   })
 
   return (
-    <group ref={ref} scale={scale}>
-      {/* тіло (витягнуте вздовж Z) */}
-      <mesh scale={[0.42, 0.55, 1]}>
-        <sphereGeometry args={[0.5, 14, 14]} />
-        <meshStandardMaterial color={color} roughness={0.4} metalness={0.1} />
-      </mesh>
-      {/* хвостовий плавець */}
-      <mesh position={[0, 0, -0.6]} rotation={[-Math.PI / 2, 0, 0]}>
-        <coneGeometry args={[0.2, 0.45, 6]} />
-        <meshStandardMaterial color={color} roughness={0.4} metalness={0.1} />
-      </mesh>
-      {/* очі */}
-      <mesh position={[0.18, 0.08, 0.3]}>
-        <sphereGeometry args={[0.05, 8, 8]} />
-        <meshStandardMaterial color="#0a1620" roughness={0.3} />
-      </mesh>
-      <mesh position={[-0.18, 0.08, 0.3]}>
-        <sphereGeometry args={[0.05, 8, 8]} />
-        <meshStandardMaterial color="#0a1620" roughness={0.3} />
-      </mesh>
+    <group ref={ref}>
+      <AutoModel url={url} targetSize={targetSize} castShadow={false} receiveShadow={false} />
     </group>
   )
 }
 
-/** Бульбашки, що піднімаються (точковий хмара, оновлюється по-кадрово). */
+/** Бульбашки, що піднімаються (точковий хмара). */
 function Bubbles({ count = 80 }: { count?: number }) {
   const ref = useRef<THREE.Points>(null)
   const rand = useMemo(() => mulberry32(777), [])
