@@ -4,18 +4,17 @@ import { Lights } from './Lights'
 import { CausticsFloor } from './CausticsFloor'
 import { WaterSurface } from './WaterSurface'
 import { GlowArtifact } from './GlowArtifact'
-import { ComplexModel } from './ComplexModel'
-import { LightBeams } from './LightBeams'
 import { PhysicsWorld } from './PhysicsWorld'
 import { Effects } from './Effects'
 import { Rocks } from './environment/Rocks'
 import { Flora } from './environment/Flora'
 import { Fauna } from './environment/Fauna'
 import { Props } from './environment/Props'
+import { Ruins } from './environment/Ruins'
 
 /**
- * «Затонулий храм» — повноцінна підводна локація:
- * каустика, поверхня води, рифи, флора, фауна, руїни та фізика.
+ * «Затонулий храм» — руїни храму, коралові рифи, фауна та підводна фізика.
+ * Центральна композиція: храм + колони, решта — по периметру.
  */
 export function Scene() {
   return (
@@ -35,7 +34,6 @@ export function Scene() {
       />
 
       <Lights />
-      <LightBeams />
 
       {/* Процедурна env map (холодні підводні відблиски) */}
       <Environment resolution={128}>
@@ -47,19 +45,16 @@ export function Scene() {
       <CausticsFloor />
       <WaterSurface />
 
-      {/* Наповнення локації (готові GLB-моделі) */}
+      {/* Локація (готові GLB-моделі) */}
       <Suspense fallback={null}>
+        <Ruins />
         <Rocks />
         <Flora />
         <Fauna />
         <Props />
       </Suspense>
 
-      {/* Центральна композиція: храм + артефакт */}
-      <Suspense fallback={null}>
-        <ComplexModel position={[0, 0, 0]} />
-      </Suspense>
-      <GlowArtifact position={[0, 1.7, 0]} />
+      <GlowArtifact position={[0, 2.2, 3.5]} />
 
       <PhysicsWorld />
 
@@ -69,7 +64,7 @@ export function Scene() {
         enableDamping
         dampingFactor={0.08}
         minDistance={5}
-        maxDistance={28}
+        maxDistance={30}
         maxPolarAngle={Math.PI / 2 - 0.05}
         target={[0, 2, 0]}
         autoRotate
