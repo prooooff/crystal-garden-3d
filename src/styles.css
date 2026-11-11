@@ -1,0 +1,125 @@
+:root {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background: #05060f;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  color: #e8e6ff;
+}
+
+/* Canvas займає весь екран */
+#root > div,
+canvas {
+  display: block;
+}
+
+/* Оверлей поверх 3D-сцени. Сам контейнер не блокує кліки по сцені. */
+.overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.overlay__panel {
+  position: absolute;
+  left: 20px;
+  bottom: 20px;
+  max-width: 340px;
+  padding: 18px 20px;
+  border: 1px solid rgba(167, 139, 250, 0.35);
+  border-radius: 16px;
+  background: rgba(10, 10, 26, 0.55);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+  pointer-events: auto;
+  animation: fadeIn 1.2s ease both;
+}
+
+.overlay__title {
+  margin: 0 0 6px;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  background: linear-gradient(90deg, #a78bfa, #22d3ee, #f472b6);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.overlay__subtitle {
+  margin: 0 0 12px;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: rgba(232, 230, 255, 0.55);
+}
+
+.overlay__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 0.86rem;
+  line-height: 1.4;
+  color: rgba(232, 230, 255, 0.85);
+}
+
+.overlay__list kbd {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 6px;
+  border: 1px solid rgba(167, 139, 250, 0.45);
+  background: rgba(167, 139, 250, 0.12);
+  font-family: inherit;
+  font-size: 0.78rem;
+}
+
+.overlay__credit {
+  position: absolute;
+  top: 18px;
+  right: 20px;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  color: rgba(232, 230, 255, 0.45);
+  text-align: right;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 560px) {
+  .overlay__panel {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    max-width: none;
+  }
+  .overlay__credit {
+    top: 12px;
+    right: 12px;
+    font-size: 0.62rem;
+  }
+}
