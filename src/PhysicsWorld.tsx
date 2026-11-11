@@ -1,12 +1,6 @@
 import { useEffect, useRef } from 'react'
-import {
-  Physics,
-  RigidBody,
-  CuboidCollider,
-  useRapier,
-  type RapierRigidBody,
-} from '@react-three/rapier'
-import { useThree, useFrame } from '@react-three/fiber'
+import { Physics, RigidBody, CuboidCollider, useRapier } from '@react-three/rapier'
+import { useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 
 export interface BallData {
@@ -17,68 +11,47 @@ export interface BallData {
   radius: number
 }
 
-interface PedestalProps {
+interface StoneBlockProps {
   position: [number, number, number]
   args: [number, number, number]
-  color: string
+  rotation?: [number, number, number]
+  color?: string
 }
 
-/** Фіксований постамент-примітив (box) із фізичним колайдером. */
-function Pedestal({ position, args, color }: PedestalProps) {
+/** Фіксований кам'яний блок-перешкода. */
+function StoneBlock({ position, args, rotation = [0, 0, 0], color = '#3d4c5a' }: StoneBlockProps) {
   return (
-    <RigidBody type="fixed" colliders="cuboid" position={position}>
+    <RigidBody type="fixed" colliders="cuboid" position={position} rotation={rotation}>
       <mesh castShadow receiveShadow>
         <boxGeometry args={args} />
-        <meshStandardMaterial color={color} metalness={0.85} roughness={0.25} />
+        <meshStandardMaterial color={color} metalness={0.1} roughness={0.85} />
       </mesh>
     </RigidBody>
   )
 }
 
-/** Фіксований похилий пандус. */
-function Ramp() {
-  return (
-    <RigidBody type="fixed" colliders="cuboid" position={[7, 0.25, -3.5]} rotation={[0, 0.6, -0.35]}>
-      <mesh castShadow receiveShadow>
-        <boxGeometry args={[5, 0.5, 2.6]} />
-        <meshStandardMaterial color="#3f3f56" metalness={0.7} roughness={0.35} />
-      </mesh>
-    </RigidBody>
-  )
-}
-
-interface BoxDef {
+interface RubbleDef {
   position: [number, number, number]
   color: string
 }
 
-const STACK: BoxDef[] = [
-  { position: [5.5, 0.6, 2], color: '#ff4d6d' },
-  { position: [5.5, 1.7, 2], color: '#fbbf24' },
-  { position: [5.5, 2.8, 2], color: '#34d399' },
+const RUBBLE: RubbleDef[] = [
+  { position: [5, 0.5, 2.5], color: '#45566a' },
+  { position: [5, 1.4, 2.5], color: '#3a4a5c' },
+  { position: [5, 2.3, 2.5], color: '#4d5f74' },
+  { position: [-4.5, 0.5, -3], color: '#3a4a5c' },
+  { position: [-4.5, 1.4, -3], color: '#45566a' },
 ]
 
-const STACK2: BoxDef[] = [
-  { position: [-3.4, 0.55, -3.4], color: '#fbbf24' },
-  { position: [-3.4, 1.65, -3.4], color: '#f472b6' },
-  { position: [-3.1, 2.75, -3.2], color: '#22d3ee' },
-]
-
-/** Динамічна стопка кубів, яку можна збити. */
-function BoxStack({ boxes }: { boxes: BoxDef[] }) {
+/** Динамічна купа кам'яних уламків, яку можна розкидати. */
+function RubblePile({ blocks }: { blocks: RubbleDef[] }) {
   return (
     <>
-      {boxes.map((d, i) => (
-        <RigidBody
-          key={i}
-          colliders="cuboid"
-          position={d.position}
-          restitution={0.25}
-          friction={0.5}
-        >
+      {blocks.map((d, i) => (
+        <RigidBody key={i} colliders="cuboid" position={d.position} restitution={0.15} friction={0.7}>
           <mesh castShadow receiveShadow>
-            <boxGeometry args={[1.1, 1.1, 1.1]} />
-            <meshStandardMaterial color={d.color} metalness={0.3} roughness={0.35} />
+            <boxGeometry args={[0.9, 0.9, 0.9]} />
+            <meshStandardMaterial color={d.color} metalness={0.1} roughness={0.9} />
           </mesh>
         </RigidBody>
       ))}
@@ -86,94 +59,60 @@ function BoxStack({ boxes }: { boxes: BoxDef[] }) {
   )
 }
 
-interface BallProps {
+/** Важка впала колона (convex hull), яку можна зрушити. */
+function FallenPillar() {
+  return (
+    <RigidBody colliders="hull" position={[-5.5, 0.5, 2]} rotation={[0, 0, 1.5]} mass={6} restitution={0.1} friction={0.8}>
+      <mesh castShadow receiveShadow>
+        <cylinderGeometry args={[0.5, 0.55, 3, 12]} />
+        <meshStandardMaterial color="#3a4a5c" metalness={0.1} roughness={0.9} />
+      </mesh>
+    </RigidBody>
+  )
+}
+
+interface OrbProps {
   position: [number, number, number]
   velocity: [number, number, number]
   color: string
   radius: number
 }
 
-/** Динамічна куля, яку спавнить користувач (з початковою швидкістю). */
-function Ball({ position, velocity, color, radius }: BallProps) {
+/** Енергетична сфера, якою стріляє користувач. */
+function Orb({ position, velocity, color, radius }: OrbProps) {
   return (
     <RigidBody
       colliders="ball"
       position={position}
       linearVelocity={velocity}
-      restitution={0.78}
-      friction={0.25}
-      linearDamping={0.03}
+      restitution={0.6}
+      friction={0.2}
+      linearDamping={0.04}
       angularDamping={0.08}
     >
       <mesh castShadow>
         <sphereGeometry args={[radius, 32, 32]} />
         <meshStandardMaterial
           color={color}
-          metalness={0.3}
-          roughness={0.2}
           emissive={color}
-          emissiveIntensity={0.4}
+          emissiveIntensity={0.6}
+          metalness={0.2}
+          roughness={0.3}
         />
       </mesh>
     </RigidBody>
   )
 }
 
-/** Важка металева куля, яку можна збити з платформи. */
-function HeavyBall() {
-  return (
-    <RigidBody colliders="ball" position={[-5.5, 1.7, 3]} mass={4} restitution={0.5} friction={0.4}>
-      <mesh castShadow receiveShadow>
-        <sphereGeometry args={[0.7, 48, 48]} />
-        <meshStandardMaterial
-          color="#a78bfa"
-          metalness={0.95}
-          roughness={0.15}
-          emissive="#3b2a7a"
-          emissiveIntensity={0.4}
-        />
-      </mesh>
-    </RigidBody>
-  )
-}
-
-/** Кінематичний ротор-«пропелер», що обертається і розкидає об'єкти. */
-function Spinner() {
-  const body = useRef<RapierRigidBody>(null)
-
-  useFrame((state) => {
-    const t = state.clock.elapsedTime
-    if (body.current) {
-      const q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), t * 1.6)
-      body.current.setNextKinematicRotation({ x: q.x, y: q.y, z: q.z, w: q.w })
-    }
-  })
-
-  return (
-    <RigidBody ref={body} type="kinematicPosition" colliders="cuboid" position={[0, 2.7, 4.6]}>
-      <mesh castShadow receiveShadow>
-        <boxGeometry args={[3.4, 0.28, 0.5]} />
-        <meshStandardMaterial
-          color="#22d3ee"
-          metalness={0.9}
-          roughness={0.2}
-          emissive="#0a4a5e"
-          emissiveIntensity={0.7}
-        />
-      </mesh>
-    </RigidBody>
-  )
-}
-
-/** Вибух на клавішу E: імпульс у всі динамічні тіла в радіусі. */
-function ExplosionController() {
+/** Ударна хвиля на клавішу E: імпульс у динамічні тіла в радіусі. */
+function Shockwave() {
   const { world } = useRapier()
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.code !== 'KeyE') return
 
-      const center = new THREE.Vector3(0, 2.5, 0)
+      const center = new THREE.Vector3(0, 2, 0)
       const radius = 15
 
       world.forEachRigidBody((body) => {
@@ -184,9 +123,9 @@ function ExplosionController() {
         if (dist > radius) return
 
         const dir = p.clone().sub(center)
-        dir.y += 0.9
+        dir.y += 1.2
         dir.normalize()
-        const strength = (1 - dist / radius) * 70 + 18
+        const strength = (1 - dist / radius) * 45 + 12
         body.applyImpulse(
           { x: dir.x * strength, y: dir.y * strength, z: dir.z * strength },
           true,
@@ -206,8 +145,8 @@ interface BallSpawnerProps {
 }
 
 /**
- * Клік по сцені кидає кулю від камери в точку прицілу
- * (перетин променя камери з площиною підлоги). Drag ігнорується.
+ * Клік кидає енергосферу від камери в точку прицілу
+ * (перетин променя камери з площиною дна). Drag ігнорується.
  */
 function BallSpawner({ onSpawn }: BallSpawnerProps) {
   const { camera, gl } = useThree()
@@ -225,7 +164,7 @@ function BallSpawner({ onSpawn }: BallSpawnerProps) {
       const dx = e.clientX - down[0]
       const dy = e.clientY - down[1]
       down = null
-      if (dx * dx + dy * dy > 25) return // це був drag, не клік
+      if (dx * dx + dy * dy > 25) return
 
       const ndc = new THREE.Vector2(
         (e.clientX / window.innerWidth) * 2 - 1,
@@ -243,7 +182,7 @@ function BallSpawner({ onSpawn }: BallSpawnerProps) {
 
       const spawn = camera.position.clone().addScaledVector(dir, 1.6)
       spawn.y = Math.max(spawn.y, 1.2)
-      const velocity = target.clone().sub(spawn).normalize().multiplyScalar(24)
+      const velocity = target.clone().sub(spawn).normalize().multiplyScalar(22)
 
       onSpawn([spawn.x, spawn.y, spawn.z], [velocity.x, velocity.y, velocity.z])
     }
@@ -264,38 +203,28 @@ interface PhysicsWorldProps {
 }
 
 /**
- * Фізичний світ Rapier: гравітація, невидима підлога, платформи,
- * пандус, кінематичний ротор, динамічні куби/кулі та вибух.
+ * Фізичний світ Rapier (підводний): знижена гравітація, кам'яні уламки,
+ * впала колона, енергосфери та ударна хвиля.
  */
 export function PhysicsWorld({ balls }: PhysicsWorldProps) {
   return (
-    <Physics gravity={[0, -25, 0]}>
+    <Physics gravity={[0, -18, 0]}>
       <RigidBody type="fixed" colliders={false}>
-        <CuboidCollider args={[20, 0.5, 20]} position={[0, -0.5, 0]} />
+        <CuboidCollider args={[22, 0.5, 22]} position={[0, -0.5, 0]} />
       </RigidBody>
 
-      <Pedestal position={[0, 0.7, 0]} args={[3, 1.4, 3]} color="#2a2a3f" />
-      <Pedestal position={[-5.5, 0.5, 3]} args={[2.2, 1, 2.2]} color="#1f2a3a" />
-      <Pedestal position={[3.5, 0.4, -5]} args={[2.6, 0.8, 2.6]} color="#241a3a" />
+      <StoneBlock position={[6, 0.5, -2]} args={[2.2, 1, 1.4]} rotation={[0, 0.4, 0]} />
+      <StoneBlock position={[-6, 0.4, 3.5]} args={[1.8, 0.8, 1.8]} rotation={[0, -0.3, 0]} />
+      <StoneBlock position={[2, 0.35, -6]} args={[2.4, 0.7, 1.2]} rotation={[0, 0.2, 0]} />
 
-      <Ramp />
-      <Spinner />
-
-      <BoxStack boxes={STACK} />
-      <BoxStack boxes={STACK2} />
-      <HeavyBall />
+      <RubblePile blocks={RUBBLE} />
+      <FallenPillar />
 
       {balls.map((b) => (
-        <Ball
-          key={b.id}
-          position={b.position}
-          velocity={b.velocity}
-          color={b.color}
-          radius={b.radius}
-        />
+        <Orb key={b.id} position={b.position} velocity={b.velocity} color={b.color} radius={b.radius} />
       ))}
 
-      <ExplosionController />
+      <Shockwave />
     </Physics>
   )
 }

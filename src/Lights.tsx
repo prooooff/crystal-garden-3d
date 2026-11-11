@@ -3,60 +3,46 @@ import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 
 /**
- * Освітлення сцени:
- *  - ambient + hemisphere (базова заповнювальна),
- *  - directional з картою тіней (головне світло + реальні тіні),
- *  - кольорові point light: два анімовані (рух/колір) + одне «миготливе».
+ * Підводне освітлення:
+ *  - ambient + hemisphere (холодне заповнювальне),
+ *  - directional з поверхні (god ray + реальні тіні),
+ *  - point-світло артефакту (пульсує),
+ *  - холодне фонове світло ззаду.
  */
 export function Lights() {
-  const pointA = useRef<THREE.PointLight>(null)
-  const pointB = useRef<THREE.PointLight>(null)
-  const flicker = useRef<THREE.PointLight>(null)
+  const artifactLight = useRef<THREE.PointLight>(null)
 
   useFrame((state) => {
     const t = state.clock.elapsedTime
-    if (pointA.current) {
-      pointA.current.position.x = Math.sin(t * 0.7) * 6
-      pointA.current.position.z = Math.cos(t * 0.7) * 6
-      pointA.current.color.setHSL((t * 0.06) % 1, 0.85, 0.62)
-    }
-    if (pointB.current) {
-      pointB.current.position.x = Math.cos(t * 0.5) * 5
-      pointB.current.position.z = Math.sin(t * 0.5) * 5
-    }
-    if (flicker.current) {
-      // Нерегулярне «мерехтіння» (добуток двох синусів різної частоти).
-      const f = Math.sin(t * 11.3) * Math.sin(t * 7.7 + 1.2)
-      flicker.current.intensity = 75 + f * 45
+    if (artifactLight.current) {
+      artifactLight.current.intensity = 26 + Math.sin(t * 1.6) * 6
     }
   })
 
   return (
     <>
-      <ambientLight intensity={0.35} />
-      <hemisphereLight args={['#b0c4ff', '#1a0b2e', 0.7]} />
+      <ambientLight intensity={0.25} color="#3a5f7a" />
+      <hemisphereLight args={['#7fb2c9', '#0a1822', 0.6]} />
 
       <directionalLight
         castShadow
-        position={[8, 14, 6]}
-        intensity={2.5}
-        color="#fff4e0"
+        position={[6, 16, 3]}
+        intensity={1.6}
+        color="#bfe8ff"
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
         shadow-camera-near={1}
         shadow-camera-far={60}
-        shadow-camera-left={-20}
-        shadow-camera-right={20}
-        shadow-camera-top={20}
-        shadow-camera-bottom={-20}
+        shadow-camera-left={-22}
+        shadow-camera-right={22}
+        shadow-camera-top={22}
+        shadow-camera-bottom={-22}
         shadow-bias={-0.0004}
         shadow-normalBias={0.02}
       />
 
-      <pointLight ref={pointA} position={[6, 4, 0]} intensity={140} distance={30} color="#ff4dff" />
-      <pointLight ref={pointB} position={[-5, 3, 4]} intensity={110} distance={28} color="#22d3ee" />
-      <pointLight position={[0, 2.5, -6]} intensity={90} distance={26} color="#7c3aed" />
-      <pointLight ref={flicker} position={[0, 5.5, 0]} intensity={80} distance={22} color="#f472b6" />
+      <pointLight ref={artifactLight} position={[0, 2.4, 0]} intensity={28} distance={14} color="#7fe3e8" />
+      <pointLight position={[0, 4, -7]} intensity={18} distance={20} color="#2b6f9e" />
     </>
   )
 }

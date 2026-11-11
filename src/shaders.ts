@@ -1,73 +1,79 @@
-// Кастомні GLSL-шейдери проєкту.
-// 1) EnergyFloor — анімована енергетична сітка підлоги (вершинні хвилі + фрагментна сітка).
-// 2) GlowCrystal — френелівське неонове свічення кристалів.
+// Кастомні GLSL-шейдери проєкту «Затонулий храм»:
+// 1) caustics — рухомі переливи світла на дні (каустика).
+// 2) water — напівпрозора поверхня води з хвилями та френелем.
+// 3) glow — френелівське свічення артефакту.
 
-export const energyFloorVertex = /* glsl */ `
-uniform float uTime;
+export const causticsVertex = /* glsl */ `
 varying vec2 vUv;
-varying vec3 vWorldPos;
-varying float vHeight;
 
 void main() {
   vUv = uv;
-  vec3 pos = position;
-
-  // Вершинне зміщення: суперпозиція хвиль у площині площини (вздовж її локальної нормалі Z).
-  float w = sin(pos.x * 2.2 + uTime * 1.1) * cos(pos.y * 2.2 + uTime * 0.8);
-  w += sin((pos.x + pos.y) * 3.0 + uTime * 0.6) * 0.55;
-  w += cos(pos.x * 5.0 - uTime * 0.4) * 0.25;
-  pos.z += w * 0.07;
-  vHeight = w;
-
-  vec4 worldPos = modelMatrix * vec4(pos, 1.0);
-  vWorldPos = worldPos.xyz;
-  gl_Position = projectionMatrix * viewMatrix * worldPos;
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 }
 `
 
-export const energyFloorFragment = /* glsl */ `
+export const causticsFragment = /* glsl */ `
 uniform float uTime;
-uniform vec3 uColorA;
-uniform vec3 uColorB;
+uniform vec3 uSand;
+uniform vec3 uLight;
 varying vec2 vUv;
-varying vec3 vWorldPos;
-varying float vHeight;
+
+float causticPattern(vec2 uv, float t) {
+  float c = 0.0;
+  float a = 0.55;
+  vec2 p = uv;
+  for (int i = 0; i < 4; i++) {
+    vec2 q = p * 1.4 + vec2(t * (0.18 + 0.08 * float(i)), t * 0.12);
+    c += a * (sin(q.x + sin(q.y * 1.7 + t * 1.2)) + sin(q.y + cos(q.x * 1.4 + t * 0.9)));
+    p = p * 1.7 + vec2(0.37, 0.71);
+    a *= 0.5;
+  }
+  return c;
+}
 
 void main() {
-  // Антиаліазована сітка (на основі похідних екранних координат).
-  vec2 g = vUv * 44.0;
-  vec2 grid = abs(fract(g - 0.5) - 0.5) / fwidth(g);
-  float line = min(grid.x, grid.y);
-  float gridIntensity = 1.0 - min(line, 1.0);
-
-  vec2 c = vUv - 0.5;
-  float dist = length(c);
-
-  // Радіальна пульсація, що розходиться від центру сцени.
-  float pulse = 0.5 + 0.5 * sin(dist * 22.0 - uTime * 3.0);
-  pulse *= smoothstep(0.65, 0.05, dist);
-
-  // Концентричні енергетичні кільця, що розходяться назовні.
-  float rings = sin(dist * 38.0 - uTime * 2.6);
-  rings = smoothstep(0.86, 1.0, rings);
-  rings *= smoothstep(0.7, 0.1, dist);
-
-  // Анімований акцентний колір (перелив між базовими).
-  vec3 accent = mix(uColorA, uColorB, 0.5 + 0.5 * sin(uTime * 0.6));
-
-  // Градієнт базового кольору, підсвічення гребенів хвиль, сітка, пульс і кільця.
-  vec3 base = mix(uColorA, uColorB, vUv.y * 0.6 + vUv.x * 0.4);
-  vec3 col = base * (0.12 + vHeight * 1.6);
-  col += accent * gridIntensity * 0.55;
-  col += uColorA * pulse * 0.8;
-  col += accent * rings * 0.9;
-  col += uColorB * pow(max(vHeight, 0.0), 2.0) * 0.5;
-
+  float c = causticPattern(vUv * 3.2, uTime);
+  c = c * 0.5 + 0.5;
+  c = smoothstep(0.4, 0.9, c);
+  vec3 col = mix(uSand, uLight, c);
   gl_FragColor = vec4(col, 1.0);
 }
 `
 
-export const glowCrystalVertex = /* glsl */ `
+export const waterVertex = /* glsl */ `
+uniform float uTime;
+varying vec3 vNormal;
+varying vec3 vViewDir;
+
+void main() {
+  vec3 pos = position;
+  pos.z += sin(pos.x * 0.8 + uTime * 1.2) * 0.15 + cos(pos.y * 0.7 + uTime * 0.9) * 0.15;
+
+  vec4 worldPos = modelMatrix * vec4(pos, 1.0);
+  vNormal = normalize(mat3(modelMatrix) * normal);
+
+  vec4 mvPosition = viewMatrix * worldPos;
+  vViewDir = normalize(-mvPosition.xyz);
+  gl_Position = projectionMatrix * mvPosition;
+}
+`
+
+export const waterFragment = /* glsl */ `
+uniform vec3 uColor;
+varying vec3 vNormal;
+varying vec3 vViewDir;
+
+void main() {
+  vec3 n = normalize(vNormal);
+  vec3 v = normalize(vViewDir);
+  float fresnel = pow(1.0 - clamp(dot(n, v), 0.0, 1.0), 2.0);
+  float alpha = mix(0.5, 0.85, fresnel);
+  vec3 col = uColor + vec3(0.12, 0.22, 0.28) * fresnel;
+  gl_FragColor = vec4(col, alpha);
+}
+`
+
+export const glowVertex = /* glsl */ `
 varying vec3 vNormal;
 varying vec3 vViewDir;
 varying vec3 vWorldPos;
@@ -83,7 +89,7 @@ void main() {
 }
 `
 
-export const glowCrystalFragment = /* glsl */ `
+export const glowFragment = /* glsl */ `
 uniform float uTime;
 uniform vec3 uColor1;
 uniform vec3 uColor2;
@@ -95,11 +101,11 @@ void main() {
   vec3 n = normalize(vNormal);
   vec3 v = normalize(vViewDir);
 
-  // Френель: краї кристала світяться сильніше за центр.
+  // Френель: краї артефакту світяться сильніше за центр.
   float fresnel = pow(1.0 - clamp(dot(n, v), 0.0, 1.0), 2.0);
 
-  // Пульсація, залежна від часу і висоти, щоб кристали «дихали».
-  float pulse = 0.55 + 0.45 * sin(uTime * 2.0 + vWorldPos.y * 2.5);
+  // Пульсація, залежна від часу і висоти.
+  float pulse = 0.6 + 0.4 * sin(uTime * 2.0 + vWorldPos.y * 2.5);
 
   vec3 col = mix(uColor1, uColor2, fresnel * pulse);
   col += uColor2 * fresnel * 1.6 * pulse;

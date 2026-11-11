@@ -1,18 +1,19 @@
 import { Suspense, useCallback, useState } from 'react'
-import { OrbitControls, Environment, Lightformer, Stars, Sparkles } from '@react-three/drei'
+import { OrbitControls, Environment, Lightformer, Sparkles } from '@react-three/drei'
 import { Lights } from './Lights'
-import { EnergyFloor } from './EnergyFloor'
-import { Crystals } from './Crystals'
+import { CausticsFloor } from './CausticsFloor'
+import { WaterSurface } from './WaterSurface'
+import { GlowArtifact } from './GlowArtifact'
 import { ComplexModel } from './ComplexModel'
 import { LightBeams } from './LightBeams'
 import { PhysicsWorld, BallSpawner, type BallData } from './PhysicsWorld'
 import { Effects } from './Effects'
 
-const PALETTE = ['#ff4d6d', '#22d3ee', '#a78bfa', '#34d399', '#fbbf24', '#f472b6']
+const PALETTE = ['#7fe3e8', '#f5d97a', '#a8e6cf', '#9fb8ff']
 
 /**
- * Головна композиція сцени. Об'єднує світло, підлогу з шейдером,
- * складну модель, кристали, фізику, постобробку та керування камерою.
+ * «Затонулий храм»: підводна сцена з каустикою, поверхнею води,
+ * кам'яною брамою, сяючим артефактом, god rays та фізикою уламків.
  */
 export function Scene() {
   const [balls, setBalls] = useState<BallData[]>([])
@@ -22,8 +23,8 @@ export function Scene() {
       const id = Date.now() + Math.random()
       const color = PALETTE[Math.floor(Math.random() * PALETTE.length)]
       setBalls((prev) => [
-        ...prev.slice(-60),
-        { id, position, velocity, color, radius: 0.4 + Math.random() * 0.18 },
+        ...prev.slice(-50),
+        { id, position, velocity, color, radius: 0.34 + Math.random() * 0.14 },
       ])
     },
     [],
@@ -31,38 +32,37 @@ export function Scene() {
 
   return (
     <>
-      <color attach="background" args={['#05060f']} />
-      <fog attach="fog" args={['#070714', 22, 90]} />
+      <color attach="background" args={['#06141d']} />
+      <fog attach="fog" args={['#0a1f2c', 12, 60]} />
 
-      {/* Космічний фон та плаваючий «пил» */}
-      <Stars radius={70} depth={40} count={2500} factor={5} saturation={0.5} fade speed={0.4} />
+      {/* Морський сніг */}
       <Sparkles
-        count={140}
-        scale={[18, 7, 18]}
-        position={[0, 3.2, 0]}
-        size={2.4}
-        speed={0.35}
-        opacity={0.5}
-        color="#c4b5fd"
+        count={180}
+        scale={[20, 10, 20]}
+        position={[0, 5, 0]}
+        size={1.6}
+        speed={0.25}
+        opacity={0.35}
+        color="#bfe8ff"
       />
 
       <Lights />
       <LightBeams />
 
-      {/* Процедурна env map (без HDR з мережі) для відблисків на металі/склі */}
-      <Environment resolution={256}>
-        <Lightformer intensity={4} position={[0, 6, 0]} scale={[12, 12, 1]} color="#ffffff" />
-        <Lightformer intensity={3} position={[-6, 2, 3]} rotation={[0, Math.PI / 2, 0]} scale={[9, 4, 1]} color="#7c3aed" />
-        <Lightformer intensity={3} position={[6, 2, 3]} rotation={[0, -Math.PI / 2, 0]} scale={[9, 4, 1]} color="#22d3ee" />
+      {/* Процедурна env map (холодні підводні відблиски) */}
+      <Environment resolution={128}>
+        <Lightformer intensity={1.2} position={[0, 8, 0]} scale={[14, 14, 1]} color="#8fd0e8" />
+        <Lightformer intensity={0.8} position={[-6, 2, 4]} rotation={[0, Math.PI / 2, 0]} scale={[8, 4, 1]} color="#2b6f9e" />
+        <Lightformer intensity={0.8} position={[6, 2, 4]} rotation={[0, -Math.PI / 2, 0]} scale={[8, 4, 1]} color="#7fe3e8" />
       </Environment>
 
-      <EnergyFloor />
+      <CausticsFloor />
+      <WaterSurface />
 
       <Suspense fallback={null}>
-        <ComplexModel position={[0, 2.5, 0]} />
+        <ComplexModel position={[0, 0, 0]} />
       </Suspense>
-
-      <Crystals />
+      <GlowArtifact position={[0, 1.7, 0]} />
 
       <PhysicsWorld balls={balls} />
       <BallSpawner onSpawn={spawnBall} />
@@ -73,11 +73,11 @@ export function Scene() {
         enableDamping
         dampingFactor={0.08}
         minDistance={5}
-        maxDistance={30}
-        maxPolarAngle={Math.PI / 2 - 0.06}
-        target={[0, 1.6, 0]}
+        maxDistance={28}
+        maxPolarAngle={Math.PI / 2 - 0.05}
+        target={[0, 2, 0]}
         autoRotate
-        autoRotateSpeed={0.5}
+        autoRotateSpeed={0.4}
       />
     </>
   )

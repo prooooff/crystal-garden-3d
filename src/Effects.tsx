@@ -3,24 +3,19 @@ import {
   Bloom,
   Vignette,
   ChromaticAberration,
-  Noise,
 } from '@react-three/postprocessing'
 import * as THREE from 'three'
 
 /**
- * Постобробка для «максимально якісного рендеру»:
- *  - Bloom — неонове свічення,
- *  - ChromaticAberration — легка кінематографічна аберація,
- *  - Vignette — м'яке затемнення країв,
- *  - Noise — тонке кінематографічне зерно.
+ * Постобробка: Bloom (свічення артефакту/променів),
+ * легка хроматична аберація (товща води) та Vignette.
  */
 export function Effects() {
   return (
     <EffectComposer multisampling={4}>
-      <Bloom intensity={1.15} luminanceThreshold={0.25} luminanceSmoothing={0.9} mipmapBlur radius={0.7} />
-      <ChromaticAberration offset={new THREE.Vector2(0.0009, 0.0012)} />
-      <Vignette offset={0.25} darkness={0.85} />
-      <Noise opacity={0.02} />
+      <Bloom intensity={0.9} luminanceThreshold={0.35} luminanceSmoothing={0.9} mipmapBlur radius={0.7} />
+      <ChromaticAberration offset={new THREE.Vector2(0.0006, 0.0008)} />
+      <Vignette offset={0.25} darkness={0.9} />
     </EffectComposer>
   )
 }

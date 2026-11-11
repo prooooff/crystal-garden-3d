@@ -1,21 +1,21 @@
 import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
-import { energyFloorVertex, energyFloorFragment } from './shaders'
+import { causticsVertex, causticsFragment } from './shaders'
 
 /**
- * Підлога сцени:
- *  - кастомний ShaderMaterial (анімована енергетична сітка з хвилями),
- *  - поверх нього ShadowMaterial, який приймає РЕАЛЬНІ тіні від directional light.
+ * Дно храму:
+ *  - кастомний шейдер каустики (рухомі переливи світла крізь воду),
+ *  - поверх нього ShadowMaterial, який приймає реальні тіні від колон.
  */
-export function EnergyFloor() {
+export function CausticsFloor() {
   const material = useRef<THREE.ShaderMaterial>(null)
 
   const uniforms = useMemo(
     () => ({
       uTime: { value: 0 },
-      uColorA: { value: new THREE.Color('#7c3aed') },
-      uColorB: { value: new THREE.Color('#22d3ee') },
+      uSand: { value: new THREE.Color('#33424e') },
+      uLight: { value: new THREE.Color('#7fe3e8') },
     }),
     [],
   )
@@ -28,21 +28,21 @@ export function EnergyFloor() {
 
   return (
     <group>
-      {/* Кастомний шейдер підлоги */}
+      {/* Каустика на дні */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
-        <planeGeometry args={[40, 40, 200, 200]} />
+        <planeGeometry args={[44, 44, 128, 128]} />
         <shaderMaterial
           ref={material}
-          vertexShader={energyFloorVertex}
-          fragmentShader={energyFloorFragment}
+          vertexShader={causticsVertex}
+          fragmentShader={causticsFragment}
           uniforms={uniforms}
         />
       </mesh>
 
       {/* Приймач реальних тіней (ShadowMaterial рендерить лише тінь) */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]} receiveShadow>
-        <planeGeometry args={[40, 40]} />
-        <shadowMaterial transparent opacity={0.45} />
+        <planeGeometry args={[44, 44]} />
+        <shadowMaterial transparent opacity={0.5} />
       </mesh>
     </group>
   )
