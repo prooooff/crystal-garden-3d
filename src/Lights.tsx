@@ -41,7 +41,9 @@ export function Lights() {
         shadow-normalBias={0.02}
       />
 
-      <pointLight ref={artifactLight} position={[0, 2.4, 0]} intensity={28} distance={14} color="#7fe3e8" />
+      <pointLight ref={artifactLight} position={[0, 2.4, 0]} intensity={30} distance={14} color="#7fe3e8" />
+      <pointLight position={[0, 3.5, 6]} intensity={40} distance={18} color="#ffd9a0" />
+      <pointLight position={[0, 6, -9]} intensity={60} distance={26} color="#3a7bd5" />
       <pointLight position={[0, 4, -7]} intensity={18} distance={20} color="#2b6f9e" />
     </>
   )

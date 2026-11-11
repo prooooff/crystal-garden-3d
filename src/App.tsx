@@ -9,7 +9,7 @@ export default function App() {
       <Canvas
         shadows
         dpr={[1, 2]}
-        camera={{ position: [0, 6, 14], fov: 45, near: 0.1, far: 100 }}
+        camera={{ position: [0, 7, 17], fov: 45, near: 0.1, far: 100 }}
         gl={{
           antialias: true,
           powerPreference: 'high-performance',

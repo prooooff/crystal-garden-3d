@@ -21,6 +21,8 @@ const FISH: FishDef[] = [
   { url: '/models/imported/clownfish.glb', targetSize: 0.5, speed: 0.5, phase: 3.1, radius: 5, height: 2.8 },
   { url: '/models/imported/blowfish.glb', targetSize: 0.5, speed: 0.6, phase: 5, radius: 7, height: 3.8 },
   { url: '/models/imported/shark.glb', targetSize: 2.4, speed: 0.25, phase: 0.8, radius: 9, height: 4.5 },
+  { url: '/models/imported/clownfish.glb', targetSize: 0.5, speed: 0.5, phase: 6.2, radius: 6.8, height: 3.2 },
+  { url: '/models/imported/goldfish.glb', targetSize: 0.65, speed: 0.42, phase: 2.4, radius: 7.5, height: 4.8 },
 ]
 
 /** Риба (готовий GLB), що пливе по еліптичній траєкторії. */

@@ -1,5 +1,12 @@
 import { useEffect, useRef } from 'react'
-import { Physics, RigidBody, CuboidCollider, useRapier, type RapierRigidBody } from '@react-three/rapier'
+import {
+  Physics,
+  RigidBody,
+  CuboidCollider,
+  useRapier,
+  useSphericalJoint,
+  type RapierRigidBody,
+} from '@react-three/rapier'
 import { useThree, useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 
@@ -9,7 +16,7 @@ interface StoneBlockProps {
   rotation?: [number, number, number]
 }
 
-/** Фіксований кам'яний блок-перешкода. */
+/** Фіксований кам'яний блок. */
 function StoneBlock({ position, args, rotation = [0, 0, 0] }: StoneBlockProps) {
   return (
     <RigidBody type="fixed" colliders="cuboid" position={position} rotation={rotation}>
@@ -27,10 +34,10 @@ interface DebrisRockProps {
   color: string
 }
 
-/** Динамічний валун на дні, який можна розштовхати ударною хвилею. */
+/** Динамічний валун, який розкидає ударна хвиля. */
 function DebrisRock({ position, radius, color }: DebrisRockProps) {
   return (
-    <RigidBody colliders="ball" position={position} restitution={0.2} friction={0.8} linearDamping={0.1} angularDamping={0.2}>
+    <RigidBody colliders="ball" position={position} restitution={0.25} friction={0.8} linearDamping={0.08} angularDamping={0.2}>
       <mesh castShadow receiveShadow>
         <icosahedronGeometry args={[radius, 1]} />
         <meshStandardMaterial color={color} roughness={0.9} flatShading />
@@ -39,7 +46,7 @@ function DebrisRock({ position, radius, color }: DebrisRockProps) {
   )
 }
 
-/** Важка впала колона (convex hull), яку можна зрушити. */
+/** Важка впала колона (convex hull). */
 function FallenPillar() {
   return (
     <RigidBody colliders="hull" position={[-5.5, 0.5, 2]} rotation={[0, 0, 1.5]} mass={6} restitution={0.1} friction={0.8}>
@@ -51,16 +58,67 @@ function FallenPillar() {
   )
 }
 
+/** Маятник: вага на сферичному джойнті, яку можна розгойдати ударною хвилею. */
+function Pendulum({ position }: { position: [number, number, number] }) {
+  const anchorRef = useRef<RapierRigidBody>(null!)
+  const weightRef = useRef<RapierRigidBody>(null!)
+  const ropeRef = useRef<THREE.Mesh>(null)
+
+  useSphericalJoint(anchorRef, weightRef, [
+    [0, 0, 0],
+    [0, 1.5, 0],
+  ])
+
+  useFrame(() => {
+    const a = anchorRef.current?.translation()
+    const w = weightRef.current?.translation()
+    if (a && w && ropeRef.current) {
+      const dx = w.x - a.x
+      const dy = w.y - a.y
+      const dz = w.z - a.z
+      const len = Math.sqrt(dx * dx + dy * dy + dz * dz)
+      ropeRef.current.position.set((a.x + w.x) / 2, (a.y + w.y) / 2, (a.z + w.z) / 2)
+      ropeRef.current.scale.y = len
+      ropeRef.current.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        new THREE.Vector3(dx, dy, dz).normalize(),
+      )
+    }
+  })
+
+  const [x, y, z] = position
+
+  return (
+    <>
+      <RigidBody ref={anchorRef} type="fixed" position={position}>
+        <mesh>
+          <torusGeometry args={[0.25, 0.06, 8, 20]} />
+          <meshStandardMaterial color="#7a5a3a" roughness={0.8} />
+        </mesh>
+      </RigidBody>
+      <RigidBody ref={weightRef} colliders="ball" position={[x, y - 3, z]} mass={1.5} restitution={0.3} friction={0.5}>
+        <mesh castShadow>
+          <icosahedronGeometry args={[0.5, 1]} />
+          <meshStandardMaterial color="#c9a86a" metalness={0.8} roughness={0.3} emissive="#3a2a00" emissiveIntensity={0.4} />
+        </mesh>
+      </RigidBody>
+      <mesh ref={ropeRef}>
+        <cylinderGeometry args={[0.03, 0.03, 1, 6]} />
+        <meshStandardMaterial color="#3a4a5c" roughness={0.9} />
+      </mesh>
+    </>
+  )
+}
+
 const CRATES: Array<[number, number, number]> = [
   [4, 3.2, 3],
   [-4.5, 4, -2.5],
   [5.5, 3.6, -4],
+  [3.5, 4, -3],
+  [-3.5, 4.5, 3],
 ]
 
-/**
- * Плавучі ящики (нейтральна плавучість: gravityScale = 0).
- * Погойдуються по-кадрово, а ударні хвилі штовхають їх убік.
- */
+/** Плавучі ящики (нейтральна плавучість), що погойдуються і реагують на хвилі. */
 function BuoyantCrates() {
   const refs = useRef<Array<RapierRigidBody | null>>([])
 
@@ -105,7 +163,7 @@ function BuoyantCrates() {
   )
 }
 
-/** Ударна хвиля по кліку: розштовхує динамічні тіла навколо точки кліку. */
+/** Ударна хвиля по кліку. */
 function ClickShockwave() {
   const { world } = useRapier()
   const { camera, gl } = useThree()
@@ -123,7 +181,7 @@ function ClickShockwave() {
       const dx = e.clientX - down[0]
       const dy = e.clientY - down[1]
       down = null
-      if (dx * dx + dy * dy > 25) return // це був drag
+      if (dx * dx + dy * dy > 25) return
 
       const ndc = new THREE.Vector2(
         (e.clientX / window.innerWidth) * 2 - 1,
@@ -148,7 +206,7 @@ function ClickShockwave() {
         const dir = p.clone().sub(center)
         dir.y += 1.4
         dir.normalize()
-        const strength = (1 - d / radius) * 30 + 8
+        const strength = (1 - d / radius) * 32 + 9
         body.applyImpulse(
           { x: dir.x * strength, y: dir.y * strength, z: dir.z * strength },
           true,
@@ -167,7 +225,7 @@ function ClickShockwave() {
   return null
 }
 
-/** Потужна ударна хвиля на клавішу E (від центру сцени). */
+/** Потужна ударна хвиля на E. */
 function Shockwave() {
   const { world } = useRapier()
 
@@ -188,7 +246,7 @@ function Shockwave() {
         const dir = p.clone().sub(center)
         dir.y += 1.2
         dir.normalize()
-        const strength = (1 - d / radius) * 50 + 14
+        const strength = (1 - d / radius) * 52 + 15
         body.applyImpulse(
           { x: dir.x * strength, y: dir.y * strength, z: dir.z * strength },
           true,
@@ -203,10 +261,7 @@ function Shockwave() {
   return null
 }
 
-/**
- * Підводний фізичний світ: знижена гравітація, уламки/валуни,
- * впала колона, плавучі ящики та ударні хвилі (клік і E).
- */
+/** Підводний фізичний світ: уламки, маятники, плавучі ящики, ударні хвилі. */
 export function PhysicsWorld() {
   return (
     <Physics gravity={[0, -18, 0]}>
@@ -222,8 +277,14 @@ export function PhysicsWorld() {
       <DebrisRock position={[-5, 0.45, -2]} radius={0.6} color="#41536a" />
       <DebrisRock position={[4, 0.4, -4]} radius={0.45} color="#50657a" />
       <DebrisRock position={[-4, 0.5, 4]} radius={0.55} color="#42556b" />
+      <DebrisRock position={[3, 0.4, 7]} radius={0.4} color="#4a5d70" />
+      <DebrisRock position={[-3, 0.4, 7]} radius={0.45} color="#50657a" />
+      <DebrisRock position={[0, 0.4, -6]} radius={0.5} color="#41536a" />
 
       <FallenPillar />
+
+      <Pendulum position={[3.5, 6, 7]} />
+      <Pendulum position={[-3.5, 6, 7]} />
 
       <BuoyantCrates />
 

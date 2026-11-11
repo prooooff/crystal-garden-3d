@@ -13,23 +13,23 @@ import { Props } from './environment/Props'
 import { Ruins } from './environment/Ruins'
 
 /**
- * «Затонулий храм» — руїни храму, коралові рифи, фауна та підводна фізика.
- * Центральна композиція: храм + колони, решта — по периметру.
+ * «Затонулий храм» — ігровий рівень: арена, алея колон, храм, артефакт,
+ * рифи, фауна та підводна фізика (маятники, уламки, ударні хвилі).
  */
 export function Scene() {
   return (
     <>
-      <color attach="background" args={['#06141d']} />
-      <fog attach="fog" args={['#0a1f2c', 12, 60]} />
+      <color attach="background" args={['#04121c']} />
+      <fog attach="fog" args={['#07212e', 10, 55]} />
 
       {/* Морський сніг */}
       <Sparkles
-        count={200}
-        scale={[22, 11, 22]}
+        count={260}
+        scale={[22, 12, 22]}
         position={[0, 5, 0]}
-        size={1.6}
-        speed={0.22}
-        opacity={0.32}
+        size={1.8}
+        speed={0.25}
+        opacity={0.4}
         color="#bfe8ff"
       />
 
@@ -54,7 +54,7 @@ export function Scene() {
         <Props />
       </Suspense>
 
-      <GlowArtifact position={[0, 2.2, 3.5]} />
+      <GlowArtifact position={[0, 3.4, 0]} />
 
       <PhysicsWorld />
 
@@ -64,7 +64,7 @@ export function Scene() {
         enableDamping
         dampingFactor={0.08}
         minDistance={5}
-        maxDistance={30}
+        maxDistance={32}
         maxPolarAngle={Math.PI / 2 - 0.05}
         target={[0, 2, 0]}
         autoRotate
