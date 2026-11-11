@@ -40,17 +40,27 @@ void main() {
   float line = min(grid.x, grid.y);
   float gridIntensity = 1.0 - min(line, 1.0);
 
-  // Радіальна пульсація, що розходиться від центру сцени.
   vec2 c = vUv - 0.5;
   float dist = length(c);
+
+  // Радіальна пульсація, що розходиться від центру сцени.
   float pulse = 0.5 + 0.5 * sin(dist * 22.0 - uTime * 3.0);
   pulse *= smoothstep(0.65, 0.05, dist);
 
-  // Градієнт базового кольору, підсвічення гребенів хвиль, сітка і пульс.
+  // Концентричні енергетичні кільця, що розходяться назовні.
+  float rings = sin(dist * 38.0 - uTime * 2.6);
+  rings = smoothstep(0.86, 1.0, rings);
+  rings *= smoothstep(0.7, 0.1, dist);
+
+  // Анімований акцентний колір (перелив між базовими).
+  vec3 accent = mix(uColorA, uColorB, 0.5 + 0.5 * sin(uTime * 0.6));
+
+  // Градієнт базового кольору, підсвічення гребенів хвиль, сітка, пульс і кільця.
   vec3 base = mix(uColorA, uColorB, vUv.y * 0.6 + vUv.x * 0.4);
-  vec3 col = base * (0.10 + vHeight * 1.6);
-  col += uColorB * gridIntensity * 0.55;
-  col += uColorA * pulse * 0.7;
+  vec3 col = base * (0.12 + vHeight * 1.6);
+  col += accent * gridIntensity * 0.55;
+  col += uColorA * pulse * 0.8;
+  col += accent * rings * 0.9;
   col += uColorB * pow(max(vHeight, 0.0), 2.0) * 0.5;
 
   gl_FragColor = vec4(col, 1.0);

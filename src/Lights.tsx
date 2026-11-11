@@ -6,11 +6,12 @@ import * as THREE from 'three'
  * Освітлення сцени:
  *  - ambient + hemisphere (базова заповнювальна),
  *  - directional з картою тіней (головне світло + реальні тіні),
- *  - три кольорові point light, два з яких анімовані (рух + зміна кольору).
+ *  - кольорові point light: два анімовані (рух/колір) + одне «миготливе».
  */
 export function Lights() {
   const pointA = useRef<THREE.PointLight>(null)
   const pointB = useRef<THREE.PointLight>(null)
+  const flicker = useRef<THREE.PointLight>(null)
 
   useFrame((state) => {
     const t = state.clock.elapsedTime
@@ -22,6 +23,11 @@ export function Lights() {
     if (pointB.current) {
       pointB.current.position.x = Math.cos(t * 0.5) * 5
       pointB.current.position.z = Math.sin(t * 0.5) * 5
+    }
+    if (flicker.current) {
+      // Нерегулярне «мерехтіння» (добуток двох синусів різної частоти).
+      const f = Math.sin(t * 11.3) * Math.sin(t * 7.7 + 1.2)
+      flicker.current.intensity = 75 + f * 45
     }
   })
 
@@ -50,6 +56,7 @@ export function Lights() {
       <pointLight ref={pointA} position={[6, 4, 0]} intensity={140} distance={30} color="#ff4dff" />
       <pointLight ref={pointB} position={[-5, 3, 4]} intensity={110} distance={28} color="#22d3ee" />
       <pointLight position={[0, 2.5, -6]} intensity={90} distance={26} color="#7c3aed" />
+      <pointLight ref={flicker} position={[0, 5.5, 0]} intensity={80} distance={22} color="#f472b6" />
     </>
   )
 }

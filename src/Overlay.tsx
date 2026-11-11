@@ -6,7 +6,8 @@ export function Overlay() {
         <h1 className="overlay__title">Crystal Garden</h1>
         <p className="overlay__subtitle">3D_R3F · Final Project</p>
         <ul className="overlay__list">
-          <li><kbd>Клік</kbd> — кинути неонову кулю (фізика Rapier)</li>
+          <li><kbd>Клік</kbd> — кинути кулю (фізика Rapier)</li>
+          <li><kbd>E</kbd> — вибух, розкидає об'єкти</li>
           <li><kbd>Drag</kbd> — обертання камери</li>
           <li><kbd>Scroll</kbd> — наближення / віддалення</li>
           <li><kbd>ПКМ drag</kbd> — панорамування</li>
