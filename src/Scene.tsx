@@ -1,4 +1,4 @@
-import { Suspense, useCallback, useState } from 'react'
+import { Suspense } from 'react'
 import { OrbitControls, Environment, Lightformer, Sparkles } from '@react-three/drei'
 import { Lights } from './Lights'
 import { CausticsFloor } from './CausticsFloor'
@@ -6,30 +6,18 @@ import { WaterSurface } from './WaterSurface'
 import { GlowArtifact } from './GlowArtifact'
 import { ComplexModel } from './ComplexModel'
 import { LightBeams } from './LightBeams'
-import { PhysicsWorld, BallSpawner, type BallData } from './PhysicsWorld'
+import { PhysicsWorld } from './PhysicsWorld'
 import { Effects } from './Effects'
-
-const PALETTE = ['#7fe3e8', '#f5d97a', '#a8e6cf', '#9fb8ff']
+import { Rocks } from './environment/Rocks'
+import { Flora } from './environment/Flora'
+import { Fauna } from './environment/Fauna'
+import { Props } from './environment/Props'
 
 /**
- * «Затонулий храм»: підводна сцена з каустикою, поверхнею води,
- * кам'яною брамою, сяючим артефактом, god rays та фізикою уламків.
+ * «Затонулий храм» — повноцінна підводна локація:
+ * каустика, поверхня води, рифи, флора, фауна, руїни та фізика.
  */
 export function Scene() {
-  const [balls, setBalls] = useState<BallData[]>([])
-
-  const spawnBall = useCallback(
-    (position: [number, number, number], velocity: [number, number, number]) => {
-      const id = Date.now() + Math.random()
-      const color = PALETTE[Math.floor(Math.random() * PALETTE.length)]
-      setBalls((prev) => [
-        ...prev.slice(-50),
-        { id, position, velocity, color, radius: 0.34 + Math.random() * 0.14 },
-      ])
-    },
-    [],
-  )
-
   return (
     <>
       <color attach="background" args={['#06141d']} />
@@ -37,12 +25,12 @@ export function Scene() {
 
       {/* Морський сніг */}
       <Sparkles
-        count={180}
-        scale={[20, 10, 20]}
+        count={200}
+        scale={[22, 11, 22]}
         position={[0, 5, 0]}
         size={1.6}
-        speed={0.25}
-        opacity={0.35}
+        speed={0.22}
+        opacity={0.32}
         color="#bfe8ff"
       />
 
@@ -59,13 +47,19 @@ export function Scene() {
       <CausticsFloor />
       <WaterSurface />
 
+      {/* Наповнення локації */}
+      <Rocks />
+      <Flora />
+      <Fauna />
+
+      {/* Центральна композиція: храм + артефакт + реквізит */}
       <Suspense fallback={null}>
         <ComplexModel position={[0, 0, 0]} />
       </Suspense>
       <GlowArtifact position={[0, 1.7, 0]} />
+      <Props />
 
-      <PhysicsWorld balls={balls} />
-      <BallSpawner onSpawn={spawnBall} />
+      <PhysicsWorld />
 
       <Effects />
 

@@ -6,8 +6,8 @@ export function Overlay() {
         <h1 className="overlay__title">Затонулий храм</h1>
         <p className="overlay__subtitle">3D_R3F · Final Project</p>
         <ul className="overlay__list">
-          <li><kbd>Клік</kbd> — вистрілити енергосферою</li>
-          <li><kbd>E</kbd> — ударна хвиля</li>
+          <li><kbd>Клік</kbd> — ударна хвиля (розштовхує уламки)</li>
+          <li><kbd>E</kbd> — потужна ударна хвиля</li>
           <li><kbd>Drag</kbd> — обертання камери</li>
           <li><kbd>Scroll</kbd> — наближення / віддалення</li>
           <li><kbd>ПКМ drag</kbd> — панорамування</li>
@@ -16,7 +16,7 @@ export function Overlay() {
       <div className="overlay__credit">
         Three.js · React Three Fiber · Rapier
         <br />
-        Каустика · Шейдери · Тіні
+        Каустика · Шейдери · Тіні · Фізика
       </div>
     </div>
   )
